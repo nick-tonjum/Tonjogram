@@ -71,3 +71,15 @@ GitHub Actions (`.github/workflows/build.yml`) builds all three platforms on eve
 | `src/audio_capture.cpp` | Device list and capture through miniaudio (WASAPI loopback, PulseAudio monitor, inputs) |
 | `src/mac_system_tap.mm` | macOS system audio through a Core Audio process tap |
 | `src/ring_buffer.h` | Lock-free buffer from the audio thread to the UI thread |
+
+## License
+
+Tonjogram is released under the [MIT License](LICENSE). You can use, modify, and redistribute it anywhere, including in commercial projects, as long as you keep the copyright notice:
+
+> Copyright (c) 2026 Tonjum Technologies // Nick Tonjum
+
+Tonjogram uses these third-party libraries, each under its own permissive license:
+
+- [GLFW](https://www.glfw.org/) — zlib/libpng License
+- [Dear ImGui](https://github.com/ocornut/imgui) — MIT License
+- [miniaudio](https://miniaud.io/) — Public Domain (Unlicense) or MIT No Attribution
