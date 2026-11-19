@@ -1,0 +1,71 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            name: windows-x64
+          - os: macos-latest
+            name: macos-universal
+          - os: ubuntu-22.04
+            name: linux-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux build deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl1-mesa-dev
+
+      - name: Configure
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+          else
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          fi
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Package
+        shell: bash
+        run: |
+          mkdir dist
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            cp build/Release/Tonjogram.exe dist/
+            (cd dist && 7z a ../Tonjogram-${{ matrix.name }}.zip Tonjogram.exe)
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            ditto -c -k --keepParent "build/Tonjogram.app" Tonjogram-${{ matrix.name }}.zip
+          else
+            strip build/Tonjogram
+            cp build/Tonjogram dist/
+            tar -czf Tonjogram-${{ matrix.name }}.tar.gz -C dist Tonjogram
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Tonjogram-${{ matrix.name }}
+          path: Tonjogram-${{ matrix.name }}.*
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Tonjogram-${{ matrix.name }}.*
